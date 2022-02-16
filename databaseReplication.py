@@ -7,7 +7,11 @@ conn = pyodbc.connect('Driver={SQL Server};'
                       'PWD=php')
 
 cursor = conn.cursor()
-cursor.execute('SELECT * FROM chiller')
+cursor.execute('SELECT * FROM INFORMATION_SCHEMA.TABLES')
+
+tables = []
 
 for i in cursor:
-    print(i)
+    tables.append(i[2])
+
+print(tables)
