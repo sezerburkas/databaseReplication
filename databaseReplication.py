@@ -61,7 +61,9 @@ for i in tables_main:
                         data += ' ,"{}"'.format(z)
                     s=s+1
                 data += ")"
-                print(data)
+                insert = "INSERT INTO {} {} VALUES {}".format(i, col, data)
+                print(insert)
+
 
 
 
