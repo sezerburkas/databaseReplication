@@ -49,8 +49,11 @@ for i in tables_main:
             count1 = v[0]
         for v in cursor_b:
             count2 = v[0]
-        
-
+        if(count1 > count2):
+            count = count1 - count2
+            cursor_m.execute("SELECT TOP {} * FROM {} ORDER BY {} DESC".format(count, i, first_table))
+            for v in cursor_m:
+                print(v)
 
 
 
