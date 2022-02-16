@@ -38,11 +38,18 @@ for i in tables_main:
         for k in cursor_m:
             if(s == 0):
                 col = "({}".format(k[0])
+                first_table = k[0]
             else:
                 col += " ,{}".format(k[0])
             s=s+1
         col += ")"
-        print(col)
+        cursor_m.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
+        cursor_b.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
+        for v in cursor_m:
+            count1 = v[0]
+        for v in cursor_b:
+            count2 = v[0]
+        
 
 
 
