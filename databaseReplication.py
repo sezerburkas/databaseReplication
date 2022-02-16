@@ -52,8 +52,17 @@ for i in tables_main:
         if(count1 > count2):
             count = count1 - count2
             cursor_m.execute("SELECT TOP {} * FROM {} ORDER BY {} DESC".format(count, i, first_table))
+            s=0
             for v in cursor_m:
-                print(v)
+                for z in v:
+                    if(s == 0):
+                        data = '("{}"'.format(z)
+                    else:
+                        data += ' ,"{}"'.format(z)
+                    s=s+1
+                data += ")"
+                print(data)
+
 
 
 
