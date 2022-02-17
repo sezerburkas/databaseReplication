@@ -22,69 +22,79 @@ cursor_b.execute('SELECT * FROM INFORMATION_SCHEMA.TABLES')
 
 tables_main = []
 tables_backup = []
-
+update = 0
 for i in cursor_m:
     tables_main.append(i[2])
 
 for i in cursor_b:
     tables_backup.append(i[2])
-
+print("\n\n\n")
+print("Simple Database Replication Tool by Sezer Burkas")
+print("Current Version: 1.0")
+print("-"*60)
+print("Disclaimer: This version is only for matching inserted data. Delete and Updated fetch will be in further updates \n")
+print("Starting...")
+print("-"*60)
 print("Tables are scanning...")
-for i in tables_main:
-    if(i in tables_backup):
-        data_type = []
-        s=0
-        cursor_m.execute("SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}' ORDER BY ORDINAL_POSITION".format(i))
-        for k in cursor_m:
-            if(s == 0):
-                first_table = k[0]
-                col = "({}".format(k[0])
-            else:
-                col += " ,{}".format(k[0])
-            data_type.append(k[1])
-            s=s+1
-        col += ")"
-        cursor_m.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
-        cursor_b.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
-        for v in cursor_m:
-            count1 = v[0]
-        for v in cursor_b:
-            count2 = v[0]
-        if(count1 > count2):
-            count = count1 - count2
-            print("{} changes detected for table {}".format(count, i))
-            cursor_m.execute("SELECT TOP {} * FROM {} ORDER BY {} DESC".format(count, i, first_table))
-            with alive_bar(count) as bar:
-                for v in cursor_m:
-                    s=0
-                    for z in v:
-                        if(z == None):
-                            val = ""
-                        else:
-                            val = z
-                        if(s == 0):
-                            data = "('{}'".format(val)
-                        else:
-                            if(data_type[s] == "datetime" or data_type[s] == "date"):
-                                data += ", CAST('{}' as datetime2)".format(val)
+with alive_bar(len(tables_main), title="\nTOTAL PROGRESS") as table_bar:
+    for i in tables_main:
+        if(i in tables_backup):
+            data_type = []
+            s=0
+            cursor_m.execute("SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}' ORDER BY ORDINAL_POSITION".format(i))
+            for k in cursor_m:
+                if(s == 0):
+                    first_table = k[0]
+                    col = "({}".format(k[0])
+                else:
+                    col += " ,{}".format(k[0])
+                data_type.append(k[1])
+                s=s+1
+            col += ")"
+            cursor_m.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
+            cursor_b.execute("SELECT COUNT({}) FROM {}".format(first_table, i))
+            for v in cursor_m:
+                count1 = v[0]
+            for v in cursor_b:
+                count2 = v[0]
+            if(count1 > count2):
+                update = 1
+                count = count1 - count2
+                cursor_m.execute("SELECT TOP {} * FROM {} ORDER BY {} DESC".format(count, i, first_table))
+                with alive_bar(count, title=i) as bar:
+                    for v in cursor_m:
+                        s=0
+                        for z in v:
+                            if(z == None):
+                                val = ""
                             else:
-                                if(isinstance(val, str)):
-                                    quote = val.find("'")
-                                    if(quote != -1):
-                                        val = "{}'{}".format(val[:quote],val[quote:-1])
-                                data += ", '{}'".format(val)
-                        s=s+1
-                    data += ")"
-                    insert = "INSERT INTO {} {} VALUES {}".format(i, col, data)
-                    try:
-                        cursor_b.execute(insert)
-                        conn_b.commit()
-                    except:
-                        print(insert)
-                    bar()
-    else:
-        print("{} is not exist!".format(i))
-                
+                                val = z
+                            if(s == 0):
+                                data = "('{}'".format(val)
+                            else:
+                                if(data_type[s] == "datetime" or data_type[s] == "date"):
+                                    data += ", CAST('{}' as datetime2)".format(val)
+                                else:
+                                    if(isinstance(val, str)):
+                                        quote = val.find("'")
+                                        if(quote != -1):
+                                            val = "{}'{}".format(val[:quote],val[quote:-1])
+                                    data += ", '{}'".format(val)
+                            s=s+1
+                        data += ")"
+                        insert = "INSERT INTO {} {} VALUES {}".format(i, col, data)
+                        try:
+                            cursor_b.execute(insert)
+                            conn_b.commit()
+                        except:
+                            print(insert)
+                        bar()
+        else:
+            print("{} is not exist!".format(i))
+        table_bar()
+
+if(update == 0):
+    print("\n Everything up-to date.")      
 
 
 
